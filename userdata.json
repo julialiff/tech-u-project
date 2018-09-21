@@ -57,25 +57,33 @@
       }
     },
 
+    "Subnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "AvailabilityZone" : "us-east-1a",
+        "CidrBlock" : "192.0.1.0/24",
+        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF Public Subnet 1" } ],
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+
+    "Subnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "AvailabilityZone" : "us-east-1b",
+        "CidrBlock" : "192.0.2.0/24",
+        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF Public Subnet 2" } ],
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+
     "EC2Instance" : {
       "Type" : "AWS::EC2::Instance",
-      "Metadata": {
-        "AWS::CloudFormation::Init": {
-          "config": {
-            "packages": {
-              "yum": {
-                "git" : [],
-                "nodejs" : [],
-                "npm" : []
-              }
-            }
-          }
-        }
-      },
 
       "Properties" : {
         "InstanceType" : { "Ref" : "InstanceType" },
         "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
+        "SubnetId" : { "Ref" : "Subnet1" },
         "KeyName" : { "Ref" : "KeyName" },
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
