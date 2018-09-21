@@ -46,6 +46,17 @@
   },
 
   "Resources" : {
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : "192.0.0.0/16",
+        "EnableDnsSupport" : true,
+        "EnableDnsHostnames" : true,
+        "InstanceTenancy" : "default",
+        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF" } ]
+      }
+    },
+
     "EC2Instance" : {
       "Type" : "AWS::EC2::Instance",
       "Metadata": {
@@ -96,7 +107,13 @@
           "FromPort" : "22",
           "ToPort" : "22",
           "CidrIp" : { "Ref" : "SSHLocation"}
-        } ]
+        },
+        {
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": "0.0.0.0/0"
+        }]
       }
     }
   },
