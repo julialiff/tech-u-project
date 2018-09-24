@@ -62,7 +62,7 @@
     "WebServerGroup" : {
       "Type" : "AWS::AutoScaling::AutoScalingGroup",
       "Properties" : {
-        "VPCZoneIdentifier" : [ { "Ref" : "VPC" } ],
+        "AvailabilityZones" : ["us-east-1a", "us-east-1b "],
         "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
         "MinSize" : "1",
         "MaxSize" : "2",
@@ -75,7 +75,7 @@
                                   "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
         }
       },
-      "DependsOn" : "VPC",
+      "DependsOn" : [ "VPC", "subnet1", "subnet2" ],
       "CreationPolicy" : {
         "ResourceSignal" : {
           "Timeout" : "PT15M",
