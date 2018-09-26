@@ -59,39 +59,6 @@
       }
     },
 
-    "WebServerGroup" : {
-      "Type" : "AWS::AutoScaling::AutoScalingGroup",
-      "Properties" : {
-        "AvailabilityZones" : ["us-east-1a", "us-east-1b "],
-        "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
-        "MinSize" : "1",
-        "MaxSize" : "2",
-        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
-        "NotificationConfiguration" : {
-          "TopicARN" : { "Ref" : "NotificationTopic" },
-          "NotificationTypes" : [ "autoscaling:EC2_INSTANCE_LAUNCH",
-                                  "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
-                                  "autoscaling:EC2_INSTANCE_TERMINATE",
-                                  "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
-        }
-      },
-      "DependsOn" : [ "VPC", "subnet1", "subnet2" ],
-      "CreationPolicy" : {
-        "ResourceSignal" : {
-          "Timeout" : "PT15M",
-          "Count"   : "1"
-        }
-      },
-      "UpdatePolicy": {
-        "AutoScalingRollingUpdate": {
-          "MinInstancesInService": "1",
-          "MaxBatchSize": "1",
-          "PauseTime" : "PT15M",
-          "WaitOnResourceSignals": "true"
-        }
-      }
-    },
-
     "LaunchConfig" : {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
       "Properties" : {
@@ -116,6 +83,93 @@
           "sudo cp -rf /tech-u /usr/share/nginx/html/\n",
           "sudo nginx\n"
         ]]}}
+      },
+      "DependsOn": "InstanceSecurityGroup"
+    },
+
+    "ElasticLoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "us-east-1" },
+        "CrossZone" : "false",
+        "Listeners" : [ {
+          "LoadBalancerPort" : "80",
+          "InstancePort" : "80",
+          "Protocol" : "HTTP"
+        } ],
+        "HealthCheck" : {
+          "Target" : "HTTP:80/",
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+      }
+    },
+
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : "192.0.0.0/16",
+        "EnableDnsSupport" : true,
+        "EnableDnsHostnames" : true,
+        "InstanceTenancy" : "default",
+        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCFVAMO" } ]
+      }
+    },
+
+    "Subnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "AvailabilityZone" : "us-east-1a",
+        "CidrBlock" : "192.0.1.0/24",
+        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF Public Subnet 1.2" } ],
+        "VpcId" : { "Ref" : "VPC" }
+      },
+      "DependsOn" : "VPC"
+    },
+
+    "Subnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "AvailabilityZone" : "us-east-1b",
+        "CidrBlock" : "192.0.2.0/24",
+        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF Public Subnet 2.2" } ],
+        "VpcId" : { "Ref" : "VPC" }
+      },
+      "DependsOn" : "VPC"
+    },
+
+    "WebServerGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
+        "MinSize" : "1",
+        "MaxSize" : "2",
+        "VPCZoneIdentifier": [ { "Ref": "Subnet1" }, { "Ref": "Subnet2" } ],
+        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
+        "NotificationConfiguration" : {
+          "TopicARN" : { "Ref" : "NotificationTopic" },
+          "NotificationTypes" : [ "autoscaling:EC2_INSTANCE_LAUNCH",
+                                  "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+                                  "autoscaling:EC2_INSTANCE_TERMINATE",
+                                  "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
+        }
+      },
+      "DependsOn" : [ "VPC" , "Subnet1", "Subnet2" ],
+      "CreationPolicy" : {
+        "ResourceSignal" : {
+          "Timeout" : "PT15M",
+          "Count"   : "1"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "1",
+          "MaxBatchSize": "1",
+          "PauseTime" : "PT15M",
+          "WaitOnResourceSignals": "true"
+        }
       }
     },
 
@@ -179,59 +233,6 @@
       }
     },
 
-    "ElasticLoadBalancer" : {
-      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties" : {
-        "AvailabilityZones" : { "Fn::GetAZs" : "us-east-1" },
-        "CrossZone" : "false",
-        "Listeners" : [ {
-          "LoadBalancerPort" : "80",
-          "InstancePort" : "80",
-          "Protocol" : "HTTP"
-        } ],
-        "HealthCheck" : {
-          "Target" : "HTTP:80/",
-          "HealthyThreshold" : "3",
-          "UnhealthyThreshold" : "5",
-          "Interval" : "30",
-          "Timeout" : "5"
-        }
-      }
-    },
-
-    "VPC" : {
-      "Type" : "AWS::EC2::VPC",
-      "Properties" : {
-        "CidrBlock" : "192.0.0.0/16",
-        "EnableDnsSupport" : true,
-        "EnableDnsHostnames" : true,
-        "InstanceTenancy" : "default",
-        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCFVAMO" } ]
-      }
-    },
-
-    "Subnet1" : {
-      "Type" : "AWS::EC2::Subnet",
-      "Properties" : {
-        "AvailabilityZone" : "us-east-1a",
-        "CidrBlock" : "192.0.1.0/24",
-        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF Public Subnet 1 VAMO" } ],
-        "VpcId" : { "Ref" : "VPC" }
-      },
-      "DependsOn" : "VPC"
-    },
-
-    "Subnet2" : {
-      "Type" : "AWS::EC2::Subnet",
-      "Properties" : {
-        "AvailabilityZone" : "us-east-1b",
-        "CidrBlock" : "192.0.2.0/24",
-        "Tags" : [ { "Key" : "Name", "Value" : "ProjetinhoCF Public Subnet 2 VAMO" } ],
-        "VpcId" : { "Ref" : "VPC" }
-      },
-      "DependsOn" : "VPC"
-    },
-
     "InstanceSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
@@ -249,7 +250,7 @@
           "CidrIp": "0.0.0.0/0"
         }]
       },
-      "DependsOn" : "VPC"
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2"]
     }
   }
 }
