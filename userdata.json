@@ -84,7 +84,7 @@
           "sudo nginx\n"
         ]]}}
       },
-      "DependsOn": "InstanceSecurityGroup"
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2", "InstanceSecurityGroup"]
     },
 
     "ElasticLoadBalancer" : {
@@ -104,7 +104,8 @@
           "Interval" : "30",
           "Timeout" : "5"
         }
-      }
+      },
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2", "InstanceSecurityGroup"]
     },
 
     "VPC" : {
@@ -144,8 +145,8 @@
       "Type" : "AWS::AutoScaling::AutoScalingGroup",
       "Properties" : {
         "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
-        "MinSize" : "1",
-        "MaxSize" : "2",
+        "MinSize" : "2",
+        "MaxSize" : "4",
         "VPCZoneIdentifier": [ { "Ref": "Subnet1" }, { "Ref": "Subnet2" } ],
         "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
         "NotificationConfiguration" : {
@@ -168,9 +169,10 @@
           "MinInstancesInService": "1",
           "MaxBatchSize": "1",
           "PauseTime" : "PT15M",
-          "WaitOnResourceSignals": "true"
+          "WaitOnResourceSignals": "false"
         }
-      }
+      },
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2", "InstanceSecurityGroup"]
     },
 
     "WebServerScaleUpPolicy" : {
@@ -178,9 +180,9 @@
       "Properties" : {
         "AdjustmentType" : "ChangeInCapacity",
         "AutoScalingGroupName" : { "Ref" : "WebServerGroup" },
-        "Cooldown" : "60",
         "ScalingAdjustment" : "1"
-      }
+      },
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2", "InstanceSecurityGroup"]
     },
     "WebServerScaleDownPolicy" : {
       "Type" : "AWS::AutoScaling::ScalingPolicy",
@@ -189,7 +191,8 @@
         "AutoScalingGroupName" : { "Ref" : "WebServerGroup" },
         "Cooldown" : "60",
         "ScalingAdjustment" : "-1"
-      }
+      },
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2", "InstanceSecurityGroup"]
     },
 
     "CPUAlarmHigh": {
@@ -230,13 +233,15 @@
           }
         ],
         "ComparisonOperator": "LessThanThreshold"
-      }
+      },
+      "DependsOn" : ["VPC", "Subnet1", "Subnet2", "InstanceSecurityGroup"]
     },
 
     "InstanceSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
         "GroupDescription" : "Enable SSH access via port 22",
+        "VpcId" : {"Ref" : "VPC" },
         "SecurityGroupIngress" : [ {
           "IpProtocol" : "tcp",
           "FromPort" : "22",
